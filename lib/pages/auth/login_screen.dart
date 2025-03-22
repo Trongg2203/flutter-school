@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:school/pages/defauult/home_screen.dart';
 import 'package:school/utils/string_Helpers.dart';
+import 'package:school/helpers/jwt.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,32 +19,70 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _autoFocus = true;
   bool _isLoading = false;
 
+  Future<void> _saveToken(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', token);
+      print('Token saved successfully: $token');
+    } catch (e) {
+      print('Error saving token: $e');
+      // Nếu không lưu được token, vẫn cho phép đăng nhập
+      print('Continuing without saving token...');
+    }
+  }
+
   void _submitForm() async {
     if (_formKey.currentState != null && _formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      await Future.delayed(Duration(seconds: 2));
+      try {
+        await Future.delayed(Duration(seconds: 2));
 
-      if (_emailController.text == 'admin@gmail.com' &&
-          _passwordController.text == '123456') {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Đăng nhập thành công!')));
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+        if (_emailController.text == 'admin@gmail.com' &&
+            _passwordController.text == '123456') {
+          // Generate fake JWT token
+          String token = generateFakeJWT();
+          print('Generated token: $token');
+
+          // Try to save token but don't block if it fails
+          await _saveToken(token);
+
+          if (!mounted) return;
+
+          // Show success message
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Đăng nhập thành công!')));
+
+          // Navigate to HomeScreen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Sai tài khoản hoặc mật khẩu!')),
+          );
+        }
+      } catch (e) {
+        print('Login error: $e');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại.'),
+            backgroundColor: Colors.red,
+          ),
         );
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Sai tài khoản hoặc mật khẩu!')));
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
-
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 

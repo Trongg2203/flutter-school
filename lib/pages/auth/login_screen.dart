@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:school/home.dart';
 import 'package:school/pages/defauult/home_screen.dart';
 import 'package:school/utils/string_Helpers.dart';
 import 'package:school/helpers/jwt.dart';
@@ -59,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // Navigate to HomeScreen
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) =>  ExpenseTrackerScreen()),
           );
         } else {
           if (!mounted) return;
